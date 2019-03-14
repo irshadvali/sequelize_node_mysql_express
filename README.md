@@ -16,3 +16,13 @@
 `npm install mysql2  --save` 
 #### install sequelize ####
 `npm install sequelize  --save`
+
+#### create a model folder and files
+
+```
+mkdir models
+touch ./models/author.js ./models/book.js 
+touch sequelize.js 
+touch index.js
+touch constants.js
+```
