@@ -1,0 +1,27 @@
+{
+  "name": "sequelize_node_mysql_express",
+  "version": "1.0.0",
+  "description": "sequelize nodejs express mysql",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sequelize",
+    "nodejs",
+    "express",
+    "mysql",
+    "javascript",
+    "api",
+    "model",
+    "orm"
+  ],
+  "author": "irshad vali",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mysql2": "^1.6.5",
+    "sequelize": "^5.1.0"
+  }
+}
