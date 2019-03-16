@@ -1,11 +1,11 @@
 const DATABASE_NAME='demo';
-const ROOT='root';
+const USERNAME='root';
 const PASSWORD='';
 const HOST='localhost';
 const  DIALECT='mysql';
 module.exports = {
     DATABASE_NAME: DATABASE_NAME,
-    ROOT:ROOT,
+    USERNAME:USERNAME,
     PASSWORD:PASSWORD,
     HOST:HOST,
     DIALECT:DIALECT
