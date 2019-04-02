@@ -1,0 +1,223 @@
+###### how to use sequelize with example #####
+
+
+### Steps are ###
+
+#### Create a project ####
+`mkdir sequelize_node_mysql_express` 
+#### Go inside project ####
+`cd sequelize_node_mysql_express` 
+#### npm init to create a package.json file ####
+`npm init` 
+#### install body-parser ####
+`npm install body-parser --save` 
+#### install express ####
+`npm install express  --save` 
+#### install mysql2 ####
+`npm install mysql2  --save` 
+#### install sequelize ####
+`npm install sequelize  --save`
+
+#### create a model folder and files
+
+```
+mkdir models
+touch ./models/author.js ./models/book.js 
+touch sequelize.js 
+touch index.js
+touch constant.js
+```
+
+##### Create a database as demo in mysql database ####
+
+#### create models Author and book ####
+#####  ./models/author.js #####
+ ```
+ module.exports = (sequelize, type) => {
+    return sequelize.define('author', {
+        id: {
+            type: type.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        authorName: type.STRING,
+    })
+}
+
+```
+#####  ./models/book.js #####
+```
+module.exports = (sequelize, type) => {
+    return sequelize.define('book', {
+        id: {
+            type: type.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        bookName: type.STRING,
+        authorId: type.INTEGER
+    })
+}
+
+```
+
+#### Create a connect with database using `sequelize.js` file ####
+
+```
+const Sequelize = require('sequelize')
+const AuthorModel = require('./models/author')
+const BookModel = require('./models/book')
+const {DATABASE_NAME,ROOT,PASSWORD,HOST,DIALECT} =require('./constants')
+const sequelize = new Sequelize(DATABASE_NAME, ROOT, PASSWORD, {
+  host: HOST,
+  dialect: DIALECT,
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+})
+
+const Book = BookModel(sequelize, Sequelize)
+const Author = AuthorModel(sequelize, Sequelize)
+// Author has Many to book
+Author.hasMany(Book)
+
+sequelize.sync({ force: false })
+  .then(() => {
+    console.log(`Database & tables created here!`)
+  })
+
+module.exports = {
+  Author,
+  Book
+}
+
+```
+
+#### Create a api using `sequelize.js` , `node` , `express` and `mysql` with index.js file ####
+
+```
+const express = require('express')
+const bodyParser = require('body-parser')
+const { Author, Book } = require('./sequelize')
+
+const app = express()
+app.use(bodyParser.json())
+
+// Create a Author
+app.post('/demoApi/author', (req, res) => {
+    console.log(req.body)
+    Author.create(req.body)
+        .then(author => res.json(author))
+})
+// create a book
+app.post('/demoApi/book', (req, res) => {
+    console.log("book==>", req.body)
+    Book.create(req.body)
+        .then(author => res.json(author))
+})
+// get all books
+app.get('/demoApi/books', (req, res) => {
+    Book.findAll().then(books =>
+        res.json(books))
+})
+// get all authors
+app.get('/demoApi/authors', (req, res) => {
+    Author.findAll().then(authors =>
+        res.json(authors))
+})
+
+// get book by  bookId
+app.get('/demoApi/book/:id', (req, res) => {
+    Book.findOne(
+        {
+            where: { id: req.params.id, },
+        }
+    ).then(book => res.json(book))
+})
+// get author by id
+app.get('/demoApi/author/:id', (req, res) => {
+    Author.findOne(
+        {
+            where: { id: req.params.id, },
+        }
+    ).then(author => res.json(author))
+})
+
+// get author with his book list
+app.get('/demoApi/authorHasManyBooks/:id', (req, res) => {
+    let query;
+
+    query = Author.findAll({
+        where: { id: req.params.id, },
+        include: [{ model: Book }
+        ]
+    })
+
+    return query.then(author => res.json(author))
+})
+
+const port = 3001
+app.listen(port, () => {
+    console.log(`Running on http://localhost:${port}`)
+})
+
+```
+
+"when we run server than its creating all table in database which name is `demo`"
+
+``` server run by below command ```
+`$ node index.js`
+
+=========================== APIS Are ====================================
+#### POST API ####
+`POST`  `http://localhost:3001/demoApi/author`
+##### body #####
+```
+{
+    "authorName": "Irshad vali",
+}
+```
+
+`POST`  `http://localhost:3001/demoApi/book`
+##### body #####
+```
+{
+    "bookName": "Compiler",
+    "authorId": 1
+}
+```
+#### GET API ####
+`GET`  `http://localhost:3001/demoApi/books`
+##### response #####
+```
+[{"id":1,"bookName":"JAVA","authorId":1,"createdAt":"2019-03-14T16:39:48.000Z","updatedAt":"2019-03-14T16:39:48.000Z"},{"id":2,"bookName":"System Architecture","authorId":1,"createdAt":"2019-03-14T16:40:18.000Z","updatedAt":"2019-03-14T16:40:18.000Z"},{"id":3,"bookName":"Android","authorId":2,"createdAt":"2019-03-14T16:40:33.000Z","updatedAt":"2019-03-14T16:40:33.000Z"},{"id":4,"bookName":"React Native","authorId":2,"createdAt":"2019-03-14T16:40:49.000Z","updatedAt":"2019-03-14T16:40:49.000Z"},{"id":5,"bookName":"Angular","authorId":3,"createdAt":"2019-03-14T16:41:10.000Z","updatedAt":"2019-03-14T16:41:10.000Z"},{"id":6,"bookName":"C#","authorId":3,"createdAt":"2019-03-14T16:41:32.000Z","updatedAt":"2019-03-14T16:41:32.000Z"},{"id":7,"bookName":"Compiler","authorId":1,"createdAt":"2019-03-14T16:43:37.000Z","updatedAt":"2019-03-14T16:43:37.000Z"}]
+```
+
+`GET`  `http://localhost:3001/demoApi/book/1`
+##### response #####
+```
+{"id":1,"bookName":"JAVA","authorId":1,"createdAt":"2019-03-14T16:39:48.000Z","updatedAt":"2019-03-14T16:39:48.000Z"}
+```
+
+
+`GET`  `http://localhost:3001/demoApi/authors`
+##### response #####
+```
+[{"id":1,"authorName":"Naushad vali","createdAt":"2019-03-14T16:36:19.000Z","updatedAt":"2019-03-14T16:36:19.000Z"},{"id":2,"authorName":"Irshad vali","createdAt":"2019-03-14T16:36:29.000Z","updatedAt":"2019-03-14T16:36:29.000Z"},{"id":3,"authorName":"Khathija Ahamadi","createdAt":"2019-03-14T16:36:46.000Z","updatedAt":"2019-03-14T16:36:46.000Z"}]
+```
+
+
+`GET`  `http://localhost:3001/demoApi/author/2`
+##### response #####
+```
+{"id":2,"authorName":"Irshad vali","createdAt":"2019-03-14T16:36:29.000Z","updatedAt":"2019-03-14T16:36:29.000Z"}
+```
+
+`GET`  `http://localhost:3001/demoApi/authorHasManyBooks/2`
+##### response #####
+```
+[{"id":2,"authorName":"Irshad vali","createdAt":"2019-03-14T16:36:29.000Z","updatedAt":"2019-03-14T16:36:29.000Z","books":[{"id":3,"bookName":"Android","authorId":2,"createdAt":"2019-03-14T16:40:33.000Z","updatedAt":"2019-03-14T16:40:33.000Z"},{"id":4,"bookName":"React Native","authorId":2,"createdAt":"2019-03-14T16:40:49.000Z","updatedAt":"2019-03-14T16:40:49.000Z"}]}]
+```

@@ -1,6 +1,9 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const { Author, Book } = require('./sequelize')
+const { Author, Book ,UserList} = require('./sequelize')
+const csvFilePath = "./authorlist.csv"
+const csv = require('csvtojson')
+let dataValue;
 
 const app = express()
 app.use(bodyParser.json())
@@ -57,6 +60,69 @@ app.get('/demoApi/authorHasManyBooks/:id', (req, res) => {
 
     return query.then(author => res.json(author))
 })
+
+app.post(`/demoApi/bluckUpload`, (req, res) => {
+    console.log("new Api")
+    let wrongData = [];
+    let temp = getValues().then(async result => {
+        let filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        await asyncForEach(result, async (element) => {
+            if (element.phoneNumber && element.phoneNumber.length === 10
+                && element.authorName && element.authorName.length > 0
+                && (filter.test(element.email) || element.email === "" || element.email === null)
+            ) {
+                await UserList.findOne(
+                    {
+                        where: { phoneNumber: element.phoneNumber, },
+                    }
+                ).then(author => {
+                    // console.log("check author", element.phoneNumber, author)
+                    if (author) {
+                        element.errorType = "Duplicate phone number values."
+                        wrongData.push(element)
+                    }
+                    else {
+
+                        UserList.create(element);
+                    }
+
+                })
+            }
+            else {
+                if (element.phoneNumber && element.phoneNumber.length !== 10) {
+                    element.errorType = "Phone number is not valid."
+                    wrongData.push(element)
+                }
+                else if (!filter.test(element.email)) {
+                    element.errorType = "Please enter valid email id."
+                    wrongData.push(element)
+                }
+                else {
+                    element.errorType = "Name can not empty."
+                    wrongData.push(element)
+                }
+            }
+        });
+        res.json(wrongData)
+    });
+
+
+});
+asyncForEach = async (array, callback) => {
+    for (let index = 0; index < array.length; index++) {
+        await callback(array[index], index, array);
+    }
+};
+ getValues = async () => {
+    await csv()
+        .fromFile(csvFilePath)
+        .then((jsonObj) => {
+            dataValue = jsonObj
+        })
+ 
+    return dataValue
+ }
+ 
 
 const port = 3001
 app.listen(port, () => {
