@@ -61,7 +61,7 @@ app.get('/demoApi/authorHasManyBooks/:id', (req, res) => {
     return query.then(author => res.json(author))
 })
 
-app.post(`/demoApi/bluckUpload`, (req, res) => {
+app.post(`/demoApi/bulkUpload`, (req, res) => {
     console.log("new Api")
     let wrongData = [];
     let temp = getValues().then(async result => {
