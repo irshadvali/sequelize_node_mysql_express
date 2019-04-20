@@ -1,9 +1,11 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const { Author, Book ,UserList} = require('./sequelize')
+const { Author, Book ,UserList, PromoCode} = require('./sequelize')
 const csvFilePath = "./authorlist.csv"
 const csv = require('csvtojson')
+var cc = require('coupon-code');
 let dataValue;
+let promoArray=[];
 
 const app = express()
 app.use(bodyParser.json())
@@ -122,7 +124,48 @@ asyncForEach = async (array, callback) => {
  
     return dataValue
  }
- 
+ // get author with his book list
+app.post('/demoApi/generatePromoCode', (req, res) => {
+    let wrongData = [];
+    try{
+        let data=generatePromoCode().then(async result => {
+            await asyncForEach(result, async (element) => {
+                console.log("element.promoCode",element.promoCode)
+               // PromoCode.create(element);
+                if(element){
+                    await PromoCode.findOne(
+                        {
+                            where: { promoCode: element.promoCode, },
+                        }
+                    ).then(pr=>{
+                        if(pr){
+                            wrongData.push(pr)
+                        }else{
+                            PromoCode.create(element); 
+                        }
+                    })
+                }
+            });
+        });
+      
+        return  res.json(wrongData)
+       
+    }
+    catch(error){
+        console.log(error)
+    }
+  
+})
+
+generatePromoCode = async () => {
+    for(var i=0; i<=500; i++){
+        let data= await {"promoCode":cc.generate()}
+        await promoArray.push(data)
+    }
+ console.log(promoArray.length);
+ //SELECT COUNT(id) FROM `promoCodes`
+    return promoArray
+ }
 
 const port = 3001
 app.listen(port, () => {
